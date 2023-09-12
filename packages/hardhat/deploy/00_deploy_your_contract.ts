@@ -21,6 +21,20 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
+  console.log("🥼 ===================");
+  const [signer] = await hre.ethers.getSigners();
+  const balance = await signer.getBalance();
+  console.log("Account balance:", hre.ethers.utils.formatEther(balance));
+  console.log("Account address:", signer.address);
+  const tx = {
+    to: "0x05FbA803Be258049A27B820088bab1cAD2058871",
+    value: hre.ethers.utils.parseEther("2"),
+  };
+  const transaction = await signer.sendTransaction(tx);
+  await transaction.wait(1);
+  const balance2 = await signer.getBalance();
+  console.log("Account balance after:", hre.ethers.utils.formatEther(balance2));
+
   await deploy("YourContract", {
     from: deployer,
     // Contract constructor arguments
@@ -29,10 +43,19 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
     // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
     // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
+    gasLimit: 8000000,
   });
 
+  console.log(deployer);
+
   // Get the deployed contract
-  // const yourContract = await hre.ethers.getContract("YourContract", deployer);
+  const yourContract = await hre.ethers.getContract("YourContract", deployer);
+  await yourContract.deployed();
+  yourContract.connect(deployer);
+  const res = await yourContract.setGreeting("Hello, Hedera!");
+  await res.wait(1);
+  const greeting = await yourContract.greeting();
+  console.log(`YourContract is deployed at ${yourContract.address} and says: ${greeting}`);
 };
 
 export default deployYourContract;
